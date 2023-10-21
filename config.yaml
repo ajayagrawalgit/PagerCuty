@@ -1,0 +1,8 @@
+pagerduty:
+  api_token:	# Create this from the pagerduty website
+  service_id:	# Service IDs which you want to see and manage incidents for (You can find it using this tool itself if you don't know yet)
+  email:	# Your Registered E-mail ID with PagerDuty
+  script_name: pagercuty
+  time_interval: 30	# This is the time interval at which the auto acknowledge function works. The unit is in seconds. (Default is set to 30 seconds)
+  company_pd_url:	# Here, you have to put the the url which your comapny uses to login to pagerduty. Example: https://ajayagrawal.pagerduty.com/sign_in/
+  company_domain:	# Here, you have to put the the url which your comapny uses to login to pagerduty. Example: https://ajayagrawal.pagerduty.com (Make sure there's no '/' at the end here)
