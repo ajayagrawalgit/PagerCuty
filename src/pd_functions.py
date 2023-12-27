@@ -6,6 +6,9 @@ import os
 import pdpyras
 import pytz
 import json
+import sys
+import threading
+from datetime import datetime
 
 
 # # # # # # # # # # # # # # # #  List Functionalities # # # # # # # # # # # # # # # #  
@@ -109,48 +112,105 @@ def pd_acknowledge_id(session, service_ids):
     pd_list_all(service_ids, session)
 
 
-def pd_acknowledge_all_loop(session,interval):
-  while True:
-    print(f"[ {get_the_date()} ] - Checking for [Triggered] Incidents on PagerDuty Now ...")
-    incidents = session.list_all(
-        'incidents',
-        params={'statuses[]':['triggered']}
-    )
-    for item in incidents:
-        item['status'] = 'acknowledged'
+def pd_acknowledge_all_loop(session, interval):
+    def input_listener():
+        nonlocal running
+        try:
+            while True:
+                user_input = input()
+                if user_input.lower() == 'q':
+                    running = False
+                    break
+        except KeyboardInterrupt:
+            pass
 
-    # PUT the updated list back up to the API
-    if len(incidents) == 0:
-        print(f"[ {get_the_date()} ] - No [Triggered] Incidents found on PagerDuty Currently !")
-    else:
-        print(f"[ {get_the_date()} ] - Acknowleding the Incidents Now ...")
-        updated_incidents = session.rput('incidents', json=incidents)
-        print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
-        print(format_incident_table(updated_incidents))
-    print("\n\n")
-    time.sleep(interval)
+    running = True
+    start_time = time.time()
+
+    # Start the input listener thread
+    input_thread = threading.Thread(target=input_listener)
+    input_thread.daemon = True
+    input_thread.start()
+
+    try:
+        while running:
+            print(f"[ {get_the_date()} ] - Checking for [Triggered] Incidents on PagerDuty Now ...")
+            incidents = session.list_all(
+                'incidents',
+                params={'statuses[]': ['triggered']}
+            )
+            for item in incidents:
+                item['status'] = 'acknowledged'
+
+            # PUT the updated list back up to the API
+            if len(incidents) == 0:
+                print(f"[ {get_the_date()} ] - No [Triggered] Incidents found on PagerDuty Currently !")
+            else:
+                print(f"[ {get_the_date()} ] - Acknowledging the Incidents Now ...")
+                updated_incidents = session.rput('incidents', json=incidents)
+                print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
+                print(format_incident_table(updated_incidents))
+            print("\n\n")
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        pass  # Allow graceful termination with Ctrl+C
+
+    finally:
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f"\n[ {get_the_date()} ] - The loop was terminated gracefully. Total running time: {total_time:.2f} seconds.\n")
 
 
-def pd_acknowledge_user_loop(user_id,session,user_name,interval):
-  while True:
-    print(f"[ {get_the_date()} ] - Checking for [Triggered] Incidents assigned to {user_name} on PagerDuty Now ...")
-    incidents = session.list_all(
-        'incidents',
-        params={'user_ids[]':[user_id],'statuses[]':['triggered']}
-    )
-    for item in incidents:
-        item['status'] = 'acknowledged'
+def pd_acknowledge_user_loop(user_id, session, user_name, interval):
+    def input_listener():
+        nonlocal running
+        try:
+            while True:
+                user_input = input()
+                if user_input.lower() == 'q':
+                    running = False
+                    break
+        except KeyboardInterrupt:
+            pass
 
-    # PUT the updated list back up to the API
-    if len(incidents) == 0:
-        print(f"[ {get_the_date()} ] - No [Triggered] Incidents assigned to {user_name} found on PagerDuty Currently !")
-    else:
-        print(f"[ {get_the_date()} ] - Acknowleding the Incidents assigned to {user_name} now ...")
-        updated_incidents = session.rput('incidents', json=incidents)
-        print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
-        print(format_incident_table(updated_incidents))
-    print("\n\n")
-    time.sleep(interval)
+    running = True
+    start_time = time.time()
+
+    # Start the input listener thread
+    input_thread = threading.Thread(target=input_listener)
+    input_thread.daemon = True
+    input_thread.start()
+
+    try:
+        while running:
+            print(f"[ {get_the_date()} ] - Checking for [Triggered] Incidents assigned to {user_name} on PagerDuty Now ...")
+            incidents = session.list_all(
+                'incidents',
+                params={'user_ids[]': [user_id], 'statuses[]': ['triggered']}
+            )
+            for item in incidents:
+                item['status'] = 'acknowledged'
+
+            # PUT the updated list back up to the API
+            if len(incidents) == 0:
+                print(f"[ {get_the_date()} ] - No [Triggered] Incidents assigned to {user_name} found on PagerDuty Currently !")
+            else:
+                print(f"[ {get_the_date()} ] - Acknowledging the Incidents assigned to {user_name} now ...")
+                updated_incidents = session.rput('incidents', json=incidents)
+                print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
+                print(format_incident_table(updated_incidents))
+            print("\n\n")
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        pass  # Allow graceful termination with Ctrl+C
+
+    finally:
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f"\n[ {get_the_date()} ] - The loop was terminated gracefully. Total running time: {total_time:.2f} seconds.\n")
+
 
 
 
