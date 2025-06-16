@@ -169,154 +169,68 @@ pagerduty:
 ### Basic Commands
 
 ```bash
-# Display help information
+# Get help and version information
 python pagercuty.py --help
+python pagercuty.py --version
 
-# Check PagerDuty status
-python pagercuty.py --check_pd_status
+# Check service status
+python pagercuty.py --check_pd_status     # Check PagerDuty status
+python pagercuty.py -pds                  # Short form
 
-# List service IDs
-python pagercuty.py -get_service_ids
-
-# List schedule IDs
-python pagercuty.py -get_schedule_ids
+# List resources
+python pagercuty.py -get_service_ids      # List service IDs
+python pagercuty.py -get_schedule_ids     # List schedule IDs
 ```
 
 ### Incident Management
 
+#### Creating and Viewing Incidents
 ```bash
 # Create new incident
-python pagercuty.py --create_an_incident
+python pagercuty.py --create_an_incident  # Full command
+python pagercuty.py --crin               # Short form
 
-# List all incidents
-python pagercuty.py -list all
-
-# List user's incidents
-python pagercuty.py -list user
+# List incidents
+python pagercuty.py -list all            # List all incidents
+python pagercuty.py -list user           # List user's incidents
 ```
 
-PagerCuty - A Command-Line Utility for PagerDuty.
+#### Acknowledging Incidents
+```bash
+# Acknowledge specific incidents
+python pagercuty.py -ack all             # Acknowledge all incidents
+python pagercuty.py -ack user            # Acknowledge user's incidents
+python pagercuty.py -ack id              # Acknowledge by ID
 
-options:
-  -h, --help            show this help message and exit
-  --check_pd_status, -pds
-                        Checks the Status of PagerDuty from both, Manual hit to Company's URL and from the Official PagerDuty Status Page
-  --create_an_incident, -crin
-                        Lets you Create a PagerDuty Incident
-  -list {all,user}      all - Lists all Non-Resolved Incidents on PagerDuty, user - Lists all Incidents on PagerDuty assigned to the Ajay Agrawal
-  -ack {all,user,id}    all - Acknowledges all [Triggered] Incidents on PagerDuty, user - Acknowledges all [Triggered] Incidents on PagerDuty assigned to the Ajay Agrawal, id - Acknowledges a Specific Incident from Pagerduty (List will be
-                        Provided)
-  -ackloop {all,user}   all - Acknowledges all [Triggered] Incidents on PagerDuty every 30 seconds, user - Acknowledges all [Triggered] Incidents on PagerDuty assigned to Ajay Agrawal every 30 seconds
-  --resolve {all,user,id,like}, -res {all,user,id,like}
-                        all - Resolves all Incidents from PagerDuty, user - Resolves all Incidents from PagerDuty assigned to Ajay Agrawal, id - Resolves a Specific Incident from Pagerduty (List will be Provided), like - Resolves all the
-                        Incidents from Pagerduty containing a certain keyword
-  --add_note, -an       Use this to add note to an Incident (List will be Provided)
-  -get_service_ids      This lists all the Service IDs and their Names
-  -get_schedule_ids     This lists all the Schedule IDs and their Names
-```
-Of course, the username which you can see above i.e. `Ajay Agrawal` will be different in your case. You'll get the name which is registered with the e-mail id provided in `config.yaml`
-Also, here you can see that you'll have some short-hand commands as well for some functionalities to save some of your key-strokes :wink:
-
-### Check PagerDuty Status
-Use this command to check the status of PagerDuty. It can retrieve status from both the company's URL and the official PagerDuty Status Page
-
-```python
-python3 pagercuty.py --check_pd_status
-or
-python3 pagercuty.py --pds
+# Auto-acknowledge loops
+python pagercuty.py -ackloop all         # Auto-acknowledge all
+python pagercuty.py -ackloop user        # Auto-acknowledge user's
 ```
 
-### Create an Incident
-You can use this command to create a PagerDuty incident.
+#### Resolving Incidents
+```bash
+# Resolve by scope
+python pagercuty.py --resolve all        # Resolve all incidents
+python pagercuty.py --resolve user       # Resolve user's incidents
+python pagercuty.py --resolve id         # Resolve by ID
+python pagercuty.py --resolve like       # Resolve by keyword
 
-```python
-python3 pagercuty.py --create_an_incident
-or
-python3 pagercuty.py --crin
+# Short form alternatives
+python pagercuty.py -res all            # Short form for resolve all
+python pagercuty.py -res user           # Short form for resolve user
+python pagercuty.py -res id             # Short form for resolve by ID
+python pagercuty.py -res like           # Short form for resolve by keyword
 ```
 
-### List Incidents
-List all non-resolved incidents on PagerDuty or filter by the user.
+#### Additional Features
+```bash
+# Add notes to incidents
+python pagercuty.py --add_note           # Full command
+python pagercuty.py -an                  # Short form
 
-```python
-python3 pagercuty.py -list all
-```
-
-```python
-python3 pagercuty.py -list user
-```
-
-### Acknowledge Incidents
-Acknowledge incidents on PagerDuty. You can acknowledge all triggered incidents, all assigned to a specific user, or a specific incident by ID.
-
-```python
-python3 pagercuty.py -ack all
-```
-
-```python
-python3 pagercuty.py -ack user
-```
-
-```python
-.python3 pagercuty.py -ack id
-```
-
-### Acknowledge Incidents in a Loop
-Acknowledge triggered incidents in a loop, either all or those assigned to a specific user.
-
-```python
-python3 pagercuty.py -ackloop all
-```
-
-```python
-python3 pagercuty.py -ackloop user
-```
-
-### Resolve Incidents
-Resolve incidents on PagerDuty. You can resolve all incidents, those assigned to a specific user, a specific incident by ID, or those containing a keyword.
-
-```python
-python3 pagercuty.py --resolve all
-or
-python3 pagercuty.py -res all
-```
-
-```python
-python3 pagercuty.py --resolve user
-or
-python3 pagercuty.py --res user
-```
-
-```python
-python3 pagercuty.py --resolve id
-or
-python3 pagercuty.py -res id
-```
-
-```python
-python3 pagercuty.py --resolve like
-or
-python3 pagercuty.py -res like
-```
-
-### Add Note to Incident
-Use this command to add a note to a specific incident.
-
-```python
-python3 pagercuty.py --add_note
-or
-python3 pagercuty.py -an
-```
-
-### List Service and Schedule IDs
-List all the Service and schedule IDs along with their names.
-
-```python
-python3 pagercuty.py -get_service_ids
-```
-
-```python
-python3 pagercuty.py -get_schedule_ids
+# Resource management
+python pagercuty.py -get_service_ids     # List all services
+python pagercuty.py -get_schedule_ids    # List all schedules
 ```
 
 ## Development
