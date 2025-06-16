@@ -1,22 +1,51 @@
+"""Core functionality and utilities for PagerDuty operations.
+
+This module provides essential functions for interacting with the PagerDuty API,
+including configuration management, user authentication, and data formatting.
+"""
+
+from typing import Dict, List, Optional
+import datetime
 import yaml
 import requests
-import datetime
 from tabulate import tabulate
-import pdpyras
 
 
-# Reading the Config file for all the Secret Details
-def read_config():
-    with open("config.yaml", "r") as config_file:
-        config = yaml.load(config_file, Loader=yaml.FullLoader)
-        return config.get("pagerduty", {})
-    
+def read_config() -> Dict:
+    """Read and parse the YAML configuration file.
 
-def format_incident_table(incidents):
-    # Prepare incident data for tabulation
+    Returns:
+        Dict: Configuration settings from the 'pagerduty' section
+
+    Raises:
+        FileNotFoundError: If config.yaml is not found
+        yaml.YAMLError: If the YAML file is malformed
+    """
+    try:
+        with open("config.yaml", "r", encoding="utf-8") as config_file:
+            config = yaml.safe_load(config_file)
+            return config.get("pagerduty", {})
+    except FileNotFoundError:
+        raise FileNotFoundError("Configuration file 'config.yaml' not found")
+    except yaml.YAMLError as exc:
+        raise yaml.YAMLError(f"Error parsing config.yaml: {exc}")
+
+
+def format_incident_table(incidents: List[Dict]) -> str:
+    """Format incident data into a pretty table.
+
+    Args:
+        incidents: List of incident dictionaries from PagerDuty API
+
+    Returns:
+        str: Formatted table string
+    """
     incident_data = []
     for incident in incidents:
-        assigned_to = ", ".join([assignment["assignee"]["summary"] for assignment in incident.get("assignments", [])])
+        assigned_to = ", ".join(
+            assignment["assignee"]["summary"]
+            for assignment in incident.get("assignments", [])
+        )
         incident_data.append([
             incident['id'],
             incident['title'],
@@ -25,73 +54,88 @@ def format_incident_table(incidents):
             incident['html_url']
         ])
 
-    # Create a table with left-aligned contents
     table_headers = ["Incident ID", "Title", "Status", "Assigned To", "URL"]
-    table = tabulate(incident_data, headers=table_headers, tablefmt="pretty", stralign="left")
-
-    return table
-
-
-# Getting User ID using the Email ID Provided in config.yaml
-def get_user_id(user_email, headers):
-    BASE_URL = f"https://api.pagerduty.com/users"
-    params = {"query": user_email}
-    response = requests.get(BASE_URL, headers=headers, params=params)
-
-    if response.status_code == 200:
-        users = response.json().get("users", [])
-        if users:
-            return users[0]["id"]
-    else:
-        print(f"Failed to fetch user details for email {user_email}. Status code: {response.status_code}")
-        print(response.text)
-    return None
+    return tabulate(
+        incident_data,
+        headers=table_headers,
+        tablefmt="pretty",
+        stralign="left"
+    )
 
 
-# Function to authorize requests and get headers
-def authorize(api_token):
-    headers = {
-        "Accept": "application/vnd.pagerduty+json;version=2",
-        "Authorization": f"Token token={api_token}",
-    }
-    return headers
+def get_user_id(user_email: str, headers: Dict) -> Optional[str]:
+    """Retrieve PagerDuty user ID for a given email.
 
+    Args:
+        user_email: User's email address
+        headers: API request headers
 
-def get_user_name(user_email,headers):
-    BASE_URL = "https://api.pagerduty.com/users"
+    Returns:
+        Optional[str]: User ID if found, None otherwise
+    """
+    base_url = "https://api.pagerduty.com/users"
     params = {"query": user_email}
 
     try:
-        response = requests.get(BASE_URL, headers=headers, params=params)
+        response = requests.get(base_url, headers=headers, params=params)
+        response.raise_for_status()
 
-        if response.status_code == 200:
-            users = response.json().get("users", [])
-            if users:
-                return users[0]["name"]
-            else:
-                print(f"No user found with email: {user_email}")
-                return None
-        else:
-            print(f"Failed to fetch user details for email {user_email}. Status code: {response.status_code}")
-            print(response.text)
-            return None
+        users = response.json().get("users", [])
+        return users[0]["id"] if users else None
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    except requests.exceptions.RequestException as exc:
+        print(f"Failed to fetch user details for {user_email}: {exc}")
         return None
 
 
-def get_the_date():
-    # Get the current date and time in the system's timezone
+def authorize(api_token: str) -> Dict[str, str]:
+    """Create authorization headers for PagerDuty API requests.
+
+    Args:
+        api_token: PagerDuty API token
+
+    Returns:
+        Dict[str, str]: Headers dictionary with authorization
+    """
+    return {
+        "Accept": "application/vnd.pagerduty+json;version=2",
+        "Authorization": f"Token token={api_token}",
+    }
+
+
+def get_user_name(user_email: str, headers: Dict) -> Optional[str]:
+    """Retrieve PagerDuty user name for a given email.
+
+    Args:
+        user_email: User's email address
+        headers: API request headers
+
+    Returns:
+        Optional[str]: User's name if found, None otherwise
+    """
+    base_url = "https://api.pagerduty.com/users"
+    params = {"query": user_email}
+
+    try:
+        response = requests.get(base_url, headers=headers, params=params)
+        response.raise_for_status()
+
+        users = response.json().get("users", [])
+        return users[0]["name"] if users else None
+
+    except requests.exceptions.RequestException as exc:
+        print(f"Failed to fetch user details for {user_email}: {exc}")
+        return None
+
+
+def get_the_date() -> str:
+    """Get current date and time formatted with timezone.
+
+    Returns:
+        str: Formatted date string (e.g., "16-June-2025 (14:30 UTC)")
+    """
     current_datetime = datetime.datetime.now().astimezone()
-
-    # Format the date
     formatted_date = current_datetime.strftime('%d-%B-%Y')
-
-    # Format the time with TimeZone abbreviation
     formatted_time = current_datetime.strftime('( %H:%M %Z )')
-
-    # Combine and return the formatted date and time
-    formatted_datetime = f"{formatted_date} {formatted_time}"
-    return formatted_datetime
+    return f"{formatted_date} {formatted_time}"
 

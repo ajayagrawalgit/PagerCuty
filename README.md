@@ -1,124 +1,199 @@
 
-<a  href="https://www.buymeacoffee.com/ajayagrawal">![PagerDuty](https://github.com/ajayagrawalgit/PagerCuty/assets/94609372/9dc4c5c9-cfa2-4aac-8d12-5846a5607cac) </a>
- 
-<p align="center">
-<a href="https://github.com/ajayagrawalgit/PagerCuty/blob/main/LICENSE" title="License">
-<img src="https://img.shields.io/github/license/ajayagrawalgit/PagerCuty?label=License&logo=Github&style=flat-square" alt="PagerCuty License"/>
-</a>
-<a href="https://github.com/ajayagrawalgit/PagerCuty/fork" title="Forks">
-<img src="https://img.shields.io/github/forks/ajayagrawalgit/PagerCuty?label=Forks&logo=Github&style=flat-square" alt="ScareCrypt Forks"/>
-</a>
-<a href="https://github.com/ajayagrawalgit/PagerCuty/stargazers" title="Stars">
-<img src="https://img.shields.io/github/stars/ajayagrawalgit/PagerCuty?label=Stars&logo=Github&style=flat-square" alt="ScareCrypt Stars"/>
-</a>
-<a href="https://github.com/ajayagrawalgit/PagerCuty/issues" title="Issues">
-<img src="https://img.shields.io/github/issues/ajayagrawalgit/PagerCuty?label=Issues&logo=Github&style=flat-square" alt="ScareCrypt Issues"/>
-</a>
-<a href="https://github.com/ajayagrawalgit/PagerCuty/pulls" title="Pull Requests">
-<img src="https://img.shields.io/github/issues-pr/ajayagrawalgit/PagerCuty?label=Pull%20Requests&logo=Github&style=flat-square" alt="ScareCrypt Pull Requests"/>
-</a>
-<a href="https://github.com/ajayagrawalgit/PagerCuty" title="Repo Size">
-<img src="https://img.shields.io/github/repo-size/ajayagrawalgit/PagerCuty?label=Repo%20Size&logo=Github&style=flat-square" alt="ScareCrypt Repo Size"/>
-</a>
+# PagerCuty
 
-<br>
+<div align="center">
 
-# PagerCuty - A Command-Line Utility for Managing Incidents in PagerDuty :pager:
+[![License](https://img.shields.io/github/license/ajayagrawalgit/PagerCuty?style=flat-square)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/ajayagrawalgit/PagerCuty?style=flat-square)](https://github.com/ajayagrawalgit/PagerCuty/stargazers)
+[![Forks](https://img.shields.io/github/forks/ajayagrawalgit/PagerCuty?style=flat-square)](https://github.com/ajayagrawalgit/PagerCuty/fork)
+[![Issues](https://img.shields.io/github/issues/ajayagrawalgit/PagerCuty?style=flat-square)](https://github.com/ajayagrawalgit/PagerCuty/issues)
+[![PRs](https://img.shields.io/github/issues-pr/ajayagrawalgit/PagerCuty?style=flat-square)](https://github.com/ajayagrawalgit/PagerCuty/pulls)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 
+A professional command-line interface for efficient PagerDuty incident management.
 
-PagerCuty is a versatile command-line tool built on Python that simplifies incident management on PagerDuty. With PagerCuty, you can perform various actions, from checking PagerDuty's status to creating and managing incidents, all from the command line. This README.md file will guide you through the prerequisites, installation, configuration, and usage of PagerCuty, making your incident management process efficient and hassle-free. :rocket:
+[Getting Started](#getting-started) •
+[Installation](#installation) •
+[Documentation](#documentation) •
+[Contributing](#contributing)
+
+![PagerDuty](https://github.com/ajayagrawalgit/PagerCuty/assets/94609372/9dc4c5c9-cfa2-4aac-8d12-5846a5607cac)
+
+</div>
+
+## Overview
+
+PagerCuty is a robust command-line interface (CLI) tool designed to streamline PagerDuty incident management. Built with Python, it offers a comprehensive set of features for incident handling, status monitoring, and team collaboration, all accessible through an intuitive command-line interface.
+
+### Key Features
+
+- **Real-time Status Monitoring**: Monitor PagerDuty service status and company-specific instances
+- **Incident Management**: Create, acknowledge, and resolve incidents efficiently
+- **Automated Acknowledgment**: Set up automatic acknowledgment of triggered incidents
+- **Team Collaboration**: Add notes and manage incidents across team members
+- **Service Integration**: List and manage service IDs and schedules
+- **Cross-platform Support**: Full functionality on Linux and MacOS, with WSL support for Windows
 
 ## Table of Contents
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
 - [Usage](#usage)
-  - [Check PagerDuty Status](#check-pagerduty-status)
-  - [Create an Incident](#create-an-incident)
-  - [List Incidents](#list-incidents)
-  - [Acknowledge Incidents](#acknowledge-incidents)
-  - [Acknowledge Incidents in a Loop](#acknowledge-incidents-in-a-loop)
-  - [Resolve Incidents](#resolve-incidents)
-  - [Add Note to Incident](#add-note-to-incident)
-  - [List Service and Schedule IDs](#list-service-and-schedule-ids)
-- [Contributing](#contributing)
+  - [Basic Commands](#basic-commands)
+  - [Incident Management](#incident-management)
+  - [Advanced Features](#advanced-features)
+- [Development](#development)
+  - [Contributing](#contributing)
+  - [Building from Source](#building-from-source)
+- [Support](#support)
 - [License](#license)
 
-## Getting Started
+## Requirements
 
-### Prerequisites
-Welcome to PagerCuty :sparkles:
-Before getting started, please review the following prerequisites to ensure a smooth experience with the tool. 
+### System Requirements
 
-### Compatibility
-PagerCuty can be fully utilized on Linux and MacOS machines. On Windows, while most functionalities work seamlessly, there may be limitations for tasks involving multiline string descriptions. Efforts are being made to enhance OS independence in future updates. If Windows is your preferred choice, the complete potential of PagerCuty can be harnessed through WSL (Windows Subsystem for Linux). 
+- **Operating System**
+  - Linux (Full Support)
+  - macOS (Full Support)
+  - Windows (via WSL recommended)
 
-### Prerequisites for Linux and MacOS Users
-For a hassle-free experience with PagerCuty on Linux or MacOS, you'll need the following:
+### Dependencies
 
-1. **Text Editor**: Ensure that you have the versatile Vi or Vim editor installed. You can install it using your package manager or download it from [vim.org](https://www.vim.org/download.php). 🔍
+- **Python**: Version 3.11 or higher
+- **Vim/Vi**: Required for multi-line text input
+- **Required Python Packages**:
+  ```
+  pdpyras>=5.1.2
+  pytz>=2023.3
+  PyYAML>=6.0.1
+  requests>=2.31.0
+  tabulate>=0.9.0
+  ```
 
-2. **Python Version**: A minimum of Python 3.11.x or a higher version is required for error-free functionality. You can download Python from [python.org](https://www.python.org/downloads/). 🐍
+### Platform-Specific Notes
 
-That's all you need! The remaining dependencies will be automatically installed as Python packages, conveniently listed in the `requirements.txt` file. 
+#### Linux and macOS
+- Native support for all features
+- Package management via apt/brew recommended
 
-PagerCuty is designed with your needs in mind, and I'm excited to have you on board for this journey 😊🚀
+#### Windows
+- WSL (Windows Subsystem for Linux) recommended for full functionality
+- Some limitations with multi-line text input in native Windows
+- PowerShell or Command Prompt supported for basic operations
 
 
 <br>
 
-### Installation
-To begin using PagerCuty, follow these simple installation steps:
+## Installation
 
-1. Clone the PagerCuty repository to your local machine.
+### From Source
+
+1. Clone the repository
    ```bash
    git clone https://github.com/ajayagrawalgit/PagerCuty.git
+   cd PagerCuty
    ```
 
-2. Change your working directory to the PagerCuty folder.
+2. Create and activate a virtual environment (optional but recommended)
    ```bash
-   cd pagercuty
+   # Linux/macOS
+   python -m venv venv
+   source venv/bin/activate
+
+   # Windows
+   python -m venv venv
+   .\venv\Scripts\activate
    ```
 
-3. Install the required dependencies using `pip`.
+3. Install dependencies
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Make the `pagercuty.py` file executable.
+4. Set up execution permissions (Linux/macOS)
    ```bash
    chmod +x pagercuty.py
    ```
 
-Now you're ready to configure PagerCuty and start managing your PagerDuty incidents.
+### Via pip (Coming Soon)
 
-### Configuration
-Before using PagerCuty, you need to configure it with your PagerDuty account details. Open the `config.yaml`  file and find the following lines:
-
-```python
-pagerduty:
-  api_token:	# Create this from the pagerduty website
-  service_id:	# Service IDs which you want to see and manage incidents for (You can find it using this tool itself if you don't know yet)
-  email:	# Your Registered E-mail ID with PagerDuty
-  script_name: pagercuty
-  time_interval: 30	# This is the time interval at which the auto acknowledge function works. The unit is in seconds. (Default is set to 30 seconds)
-  company_pd_url:	# Here, you have to put the the url which your comapny uses to login to pagerduty. Example: https://ajayagrawal.pagerduty.com/sign_in/
-  company_domain:	# Here, you have to put the the url which your comapny uses to login to pagerduty. Example: https://ajayagrawal.pagerduty.com (Make sure there's no '/' at the end here)
+```bash
+pip install pagercuty
 ```
+
+### Verification
+
+Verify the installation by running:
+```bash
+python pagercuty.py --version
+```
+
+## Configuration
+
+PagerCuty requires configuration through a YAML file. Create `config.yaml` in the root directory:
+
+```yaml
+pagerduty:
+  # Required Configuration
+  api_token: "your-api-token"    # PagerDuty API token
+  service_id: "service-id"       # Comma-separated service IDs
+  email: "user@example.com"      # Your PagerDuty email
+  
+  # Optional Configuration
+  script_name: "pagercuty"       # Script name for logging
+  time_interval: 30              # Auto-acknowledgment interval (seconds)
+  company_pd_url: "https://company.pagerduty.com/sign_in"
+  company_domain: "https://company.pagerduty.com"  # No trailing slash
+```
+
+### Configuration Details
+
+| Parameter | Required | Description | Example |
+|-----------|----------|-------------|---------|
+| `api_token` | Yes | Your PagerDuty API token | `"p-1234abcd"` |
+| `service_id` | Yes | Service IDs to monitor | `"PABC123,PDEF456"` |
+| `email` | Yes | Registered email | `"user@example.com"` |
+| `time_interval` | No | Auto-ack interval | `30` |
+| `company_pd_url` | No | Company PD URL | `"https://company.pagerduty.com/sign_in"` |
+
+### Obtaining Credentials
+
+1. **API Token**: Generate from PagerDuty → User Settings → API Access
+2. **Service IDs**: Available via `python pagercuty.py -get_service_ids`
 
 <br>
 
 ## Usage
 
-PagerCuty provides various commands to interact with PagerDuty. Here's how you can use each command:
+### Basic Commands
 
-
-### Get the Help Menu
-Use `--help` or `-h` to get the help menu which will be somewhat like below:
 ```bash
-ajayagrawal@hack_the_box:~/pagercuty $ python3 pagercuty.py -h
-usage: pagercuty.py [-h] [--check_pd_status] [--create_an_incident] [-list {all,user}] [-ack {all,user,id}] [-ackloop {all,user}] [--resolve {all,user,id,like}] [--add_note] [-get_service_ids] [-get_schedule_ids]
+# Display help information
+python pagercuty.py --help
+
+# Check PagerDuty status
+python pagercuty.py --check_pd_status
+
+# List service IDs
+python pagercuty.py -get_service_ids
+
+# List schedule IDs
+python pagercuty.py -get_schedule_ids
+```
+
+### Incident Management
+
+```bash
+# Create new incident
+python pagercuty.py --create_an_incident
+
+# List all incidents
+python pagercuty.py -list all
+
+# List user's incidents
+python pagercuty.py -list user
+```
 
 PagerCuty - A Command-Line Utility for PagerDuty.
 
@@ -244,33 +319,71 @@ python3 pagercuty.py -get_service_ids
 python3 pagercuty.py -get_schedule_ids
 ```
 
-## Contributing
-Contributions to PagerCuty are welcome! If you have ideas for improvements, bug fixes, or new features, please submit an issue or create a pull request.
+## Development
+
+### Building from Source
+
+1. Fork and clone the repository
+2. Set up the development environment:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate
+   pip install -r requirements.txt
+   ```
+3. Make your changes
+4. Run tests:
+   ```powershell
+   python -m pytest
+   ```
+
+### Coding Standards
+
+- Follow PEP 8 style guide
+- Add type hints to all functions
+- Include docstrings for modules and functions
+- Maintain test coverage above 80%
+
+### Contributing Guidelines
+
+1. Create a new branch for your feature
+2. Write clear commit messages
+3. Include tests for new features
+4. Update documentation
+5. Submit a pull request
+
+## Support
+
+### Getting Help
+
+- [Open an issue](https://github.com/ajayagrawalgit/PagerCuty/issues) for bug reports
+- [Start a discussion](https://github.com/ajayagrawalgit/PagerCuty/discussions) for questions
+- [Read the wiki](https://github.com/ajayagrawalgit/PagerCuty/wiki) for detailed guides
+
+### Troubleshooting
+
+Common issues and solutions are documented in our [FAQ](https://github.com/ajayagrawalgit/PagerCuty/wiki/FAQ).
 
 ## License
-PagerCuty is released under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as needed.
 
-Happy incident management with PagerCuty! 🎉
+PagerCuty is released under the [MIT License](LICENSE).
 
+## Author
 
-<br>
-<br>
+Developed and maintained by [Ajay Agrawal](https://github.com/ajayagrawalgit)
+---
 
- ## 🧑🏻 Know Me More
-Developer - <b> Ajay Agrawal </b>
-<br>
-- 🌌 [Profile](https://github.com/ajayagrawalgit "Ajay Agrawal")
-- 🏮 [Email](mailto:ajayagrawalhere@gmail.com?subject=Hi%20from%20<repo-email> "Hi!")
-- 🐦 [Twitter Bot (@mickbotsays)](https://twitter.com/mickbotsays)
+<div align="center">
 
-<br>
-<br>
-<h2 align="center"> 🤝 Support Me 🤝 <h2>
-<p align="center">
-<a href="https://www.buymeacoffee.com/ajayagrawal" title="Buy me a Coffee"><img src="https://user-images.githubusercontent.com/94609372/232127833-d03502af-baf2-46e3-a045-0f7c84531a61.png" alt="Buy me a Coffee"/></a>
-</p>
-<br><br>
-<h4>
-<br>
-<p align="center"> Made with ♥️ in India </p>
-<br>
+**Contact**
+
+[GitHub](https://github.com/ajayagrawalgit) • 
+[Email](mailto:ajayagrawalhere@gmail.com) • 
+[Twitter Bot](https://twitter.com/mickbotsays)
+
+**Support the Project**
+
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-Support-yellow.svg)](https://www.buymeacoffee.com/ajayagrawal)
+
+Made with ♥️ in India
+
+</div>

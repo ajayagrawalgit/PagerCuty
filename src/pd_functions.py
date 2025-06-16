@@ -1,248 +1,395 @@
-from src.pd_essentials import *
-import time
+"""PagerDuty incident management functions.
+
+This module provides functions for managing PagerDuty incidents, including listing,
+acknowledging, resolving incidents and adding notes.
+"""
+
+import json
+import os
 import subprocess
 import tempfile
-import os
+import threading
+import time
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
 import pdpyras
 import pytz
-import json
-import sys
-import threading
-from datetime import datetime
+import requests
+
+from src.pd_essentials import format_incident_table, get_the_date
 
 
-# # # # # # # # # # # # # # # #  List Functionalities # # # # # # # # # # # # # # # #  
+def pd_list_all(service_ids: List[str], session: pdpyras.APISession) -> None:
+    """List all acknowledged and triggered incidents.
+    
+    Args:
+        service_ids: List of PagerDuty service IDs
+        session: PagerDuty API session
+    """
+    response = session.list_all(
+        "incidents",
+        params={
+            'service_ids[]': service_ids,
+            'statuses[]': ['acknowledged', 'triggered']
+        }
+    )
+    
+    if response:
+        print(format_incident_table(response))
+    else:
+        print("No [Acknowledged/Triggered] Incidents found on PagerDuty")
 
-def pd_list_all(service_ids,session):
-  response = session.list_all("incidents",
-               params={'service_ids[]':service_ids,
-                       'statuses[]':['acknowledged','triggered']})
-  if response:
-    print(format_incident_table(response))
-  else:
-     print("No [Acknowledged/Triggered] Incidents found on PagerDuty")
 
-
-
-
-def pd_list_user(service_ids, session, user_id, user_name):
-    response = session.list_all("incidents",
+def pd_list_user(
+    service_ids: List[str],
+    session: pdpyras.APISession,
+    user_id: str,
+    user_name: str
+) -> None:
+    """List incidents assigned to a specific user.
+    
+    Args:
+        service_ids: List of PagerDuty service IDs
+        session: PagerDuty API session
+        user_id: PagerDuty user ID
+        user_name: User's display name
+    """
+    response = session.list_all(
+        "incidents",
         params={
             'service_ids[]': service_ids,
             'statuses[]': ['acknowledged', 'triggered'],
             'user_ids[]': [user_id]
         }
     )
-
+    
     if response:
         print(format_incident_table(response))
     else:
-        print(f"No [Acknowledged/Triggered] Incidents assigned to {user_name} found on PagerDuty")
+        print(
+            f"No [Acknowledged/Triggered] Incidents assigned to {user_name} "
+            "found on PagerDuty"
+        )
 
 
+def pd_acknowledge_all(session: pdpyras.APISession) -> None:
+    """Acknowledge all triggered incidents.
+    
+    Args:
+        session: PagerDuty API session
+    """
+    incidents = session.list_all(
+        'incidents',
+        params={'statuses[]': ['triggered']}
+    )
+    
+    if not incidents:
+        print(
+            f"[ {get_the_date()} ] - No [Triggered] Incidents found on "
+            "PagerDuty Currently!"
+        )
+        return
+        
+    for incident in incidents:
+        incident['status'] = 'acknowledged'
+    
+    print(f"[ {get_the_date()} ] - Acknowledging the Incidents Now ...")
+    updated_incidents = session.rput('incidents', json=incidents)
+    print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
+    print(format_incident_table(updated_incidents))
 
 
+def pd_acknowledge_user(
+    user_id: str,
+    session: pdpyras.APISession,
+    user_name: str
+) -> None:
+    """Acknowledge all triggered incidents assigned to a specific user.
+    
+    Args:
+        user_id: PagerDuty user ID
+        session: PagerDuty API session
+        user_name: User's display name
+    """
+    incidents = session.list_all(
+        'incidents',
+        params={
+            'user_ids[]': [user_id],
+            'statuses[]': ['triggered']
+        }
+    )
+    
+    if not incidents:
+        print(
+            f"[ {get_the_date()} ] - No [Triggered] Incidents assigned to "
+            f"{user_name} found on PagerDuty Currently!"
+        )
+        return
+        
+    for incident in incidents:
+        incident['status'] = 'acknowledged'
+    
+    print(
+        f"[ {get_the_date()} ] - Acknowledging the Incidents assigned to "
+        f"{user_name} now ..."
+    )
+    updated_incidents = session.rput('incidents', json=incidents)
+    print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
+    print(format_incident_table(updated_incidents))
 
-# # # # # # # # # # # # # # # #  Acknowledge Functionalities # # # # # # # # # # # # # # # #  
 
-def pd_acknowledge_all(session):
-  incidents = session.list_all(
-    'incidents',
-    params={'statuses[]':['triggered']}
-  )
-  for item in incidents:
-    item['status'] = 'acknowledged'
-
-  # PUT the updated list back up to the API
-  if len(incidents) == 0:
-      print(f"[ {get_the_date()} ] - No [Triggered] Incidents found on PagerDuty Currently !")
-  else:
-      print(f"[ {get_the_date()} ] - Acknowleding the Incidents Now ...")
-      updated_incidents = session.rput('incidents', json=incidents)
-      print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
-      print(format_incident_table(updated_incidents))
-
-
-def pd_acknowledge_user(user_id,session,user_name):
-  incidents = session.list_all(
-    'incidents',
-    params={'user_ids[]':[user_id],'statuses[]':['triggered']}
-  )
-  for item in incidents:
-    item['status'] = 'acknowledged'
-
-  # PUT the updated list back up to the API
-  if len(incidents) == 0:
-      print(f"[ {get_the_date()} ] - No [Triggered] Incidents assigned to {user_name} found on PagerDuty Currently !")
-  else:
-      print(f"[ {get_the_date()} ] - Acknowleding the Incidents assigned to {user_name} now ...")
-      updated_incidents = session.rput('incidents', json=incidents)
-      print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
-      print(format_incident_table(updated_incidents))
-
-
-def pd_acknowledge_id(session, service_ids):
-    response = session.list_all("incidents",
-                                params={'service_ids[]': service_ids,
-                                        'statuses[]': ['triggered','acknowledged']})
+def pd_acknowledge_id(
+    session: pdpyras.APISession,
+    service_ids: List[str]
+) -> None:
+    """Acknowledge a specific incident by ID.
+    
+    Args:
+        session: PagerDuty API session
+        service_ids: List of PagerDuty service IDs
+    """
+    response = session.list_all(
+        "incidents",
+        params={
+            'service_ids[]': service_ids,
+            'statuses[]': ['triggered', 'acknowledged']
+        }
+    )
 
     if not response:
-        print(f"[ {get_the_date()} ] - No [Triggered] Incidents found on PagerDuty currently!")
+        print(
+            f"[ {get_the_date()} ] - No [Triggered] Incidents found on "
+            "PagerDuty currently!"
+        )
         return
 
     print(format_incident_table(response))
-    inc_id_input = input("Please Enter the Incident ID you want to Acknowledge from the list above: ")
+    inc_id_input = input(
+        "Please Enter the Incident ID you want to Acknowledge from the list "
+        "above: "
+    )
 
-    # Check if the incident with the provided ID is in the triggered state
-    target_incident = None
-    for incident in response:
-        if incident['id'] == inc_id_input:
-            target_incident = incident
-            break
+    target_incident = next(
+        (inc for inc in response if inc['id'] == inc_id_input),
+        None
+    )
 
     if not target_incident:
-        print(f"[ {get_the_date()} ] - No [Triggered] Incidents found with the provided Incident ID!")
+        print(
+            f"[ {get_the_date()} ] - No [Triggered] Incidents found with the "
+            "provided Incident ID!"
+        )
         return
 
-    # Acknowledge the specific incident
     target_incident['status'] = 'acknowledged'
-    updated_incident = session.rput(f'incidents/{inc_id_input}', json=target_incident)
+    session.rput(f'incidents/{inc_id_input}', json=target_incident)
     print(f"[ {get_the_date()} ] - Acknowledging {inc_id_input} now ...")
-    print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now (UPDATED LIST):")
+    print(
+        f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now "
+        "(UPDATED LIST):"
+    )
     pd_list_all(service_ids, session)
 
 
-def pd_acknowledge_all_loop(session, interval):
-    def input_listener():
-        nonlocal running
+def pd_acknowledge_all_loop(
+    session: pdpyras.APISession,
+    interval: int
+) -> None:
+    """Continuously acknowledge all triggered incidents at specified intervals.
+    
+    Args:
+        session: PagerDuty API session
+        interval: Time between checks in seconds
+    """
+    def input_listener(running: List[bool]) -> None:
         try:
             while True:
                 user_input = input()
                 if user_input.lower() == 'q':
-                    running = False
+                    running[0] = False
                     break
         except KeyboardInterrupt:
-            pass
+            running[0] = False
 
-    running = True
+    running = [True]
     start_time = time.time()
 
-    # Start the input listener thread
-    input_thread = threading.Thread(target=input_listener)
+    input_thread = threading.Thread(
+        target=input_listener,
+        args=(running,)
+    )
     input_thread.daemon = True
     input_thread.start()
 
     try:
-        while running:
-            print(f"[ {get_the_date()} ] - Checking for [Triggered] Incidents on PagerDuty Now ...")
+        while running[0]:
+            print(
+                f"[ {get_the_date()} ] - Checking for [Triggered] Incidents on "
+                "PagerDuty Now ..."
+            )
             incidents = session.list_all(
                 'incidents',
                 params={'statuses[]': ['triggered']}
             )
-            for item in incidents:
-                item['status'] = 'acknowledged'
-
-            # PUT the updated list back up to the API
-            if len(incidents) == 0:
-                print(f"[ {get_the_date()} ] - No [Triggered] Incidents found on PagerDuty Currently !")
-            else:
-                print(f"[ {get_the_date()} ] - Acknowledging the Incidents Now ...")
+            
+            if incidents:
+                for incident in incidents:
+                    incident['status'] = 'acknowledged'
+                print(
+                    f"[ {get_the_date()} ] - Acknowledging the Incidents Now ..."
+                )
                 updated_incidents = session.rput('incidents', json=incidents)
-                print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
+                print(
+                    f"[ {get_the_date()} ] - Below are the Incidents in "
+                    "PagerDuty Now:"
+                )
                 print(format_incident_table(updated_incidents))
+            else:
+                print(
+                    f"[ {get_the_date()} ] - No [Triggered] Incidents found on "
+                    "PagerDuty Currently!"
+                )
+            
             print("\n\n")
             time.sleep(interval)
 
     except KeyboardInterrupt:
-        pass  # Allow graceful termination with Ctrl+C
+        running[0] = False
 
     finally:
         end_time = time.time()
         total_time = end_time - start_time
-        print(f"\n[ {get_the_date()} ] - The loop was terminated gracefully. Total running time: {total_time:.2f} seconds.\n")
+        print(
+            f"\n[ {get_the_date()} ] - The loop was terminated gracefully. "
+            f"Total running time: {total_time:.2f} seconds.\n"
+        )
 
 
-def pd_acknowledge_user_loop(user_id, session, user_name, interval):
-    def input_listener():
-        nonlocal running
+def pd_acknowledge_user_loop(
+    user_id: str,
+    session: pdpyras.APISession,
+    user_name: str,
+    interval: int
+) -> None:
+    """Continuously acknowledge all triggered incidents assigned to a specific user
+    at specified intervals.
+    
+    Args:
+        user_id: PagerDuty user ID
+        session: PagerDuty API session
+        user_name: User's display name
+        interval: Time between checks in seconds
+    """
+    def input_listener(running: List[bool]) -> None:
         try:
             while True:
                 user_input = input()
                 if user_input.lower() == 'q':
-                    running = False
+                    running[0] = False
                     break
         except KeyboardInterrupt:
-            pass
+            running[0] = False
 
-    running = True
+    running = [True]
     start_time = time.time()
 
-    # Start the input listener thread
-    input_thread = threading.Thread(target=input_listener)
+    input_thread = threading.Thread(
+        target=input_listener,
+        args=(running,)
+    )
     input_thread.daemon = True
     input_thread.start()
 
     try:
-        while running:
-            print(f"[ {get_the_date()} ] - Checking for [Triggered] Incidents assigned to {user_name} on PagerDuty Now ...")
+        while running[0]:
+            print(
+                f"[ {get_the_date()} ] - Checking for [Triggered] Incidents assigned to "
+                f"{user_name} on PagerDuty Now ..."
+            )
             incidents = session.list_all(
                 'incidents',
                 params={'user_ids[]': [user_id], 'statuses[]': ['triggered']}
             )
-            for item in incidents:
-                item['status'] = 'acknowledged'
-
-            # PUT the updated list back up to the API
-            if len(incidents) == 0:
-                print(f"[ {get_the_date()} ] - No [Triggered] Incidents assigned to {user_name} found on PagerDuty Currently !")
-            else:
-                print(f"[ {get_the_date()} ] - Acknowledging the Incidents assigned to {user_name} now ...")
+            
+            if incidents:
+                for incident in incidents:
+                    incident['status'] = 'acknowledged'
+                print(
+                    f"[ {get_the_date()} ] - Acknowledging the Incidents assigned to "
+                    f"{user_name} now ..."
+                )
                 updated_incidents = session.rput('incidents', json=incidents)
-                print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now:")
+                print(
+                    f"[ {get_the_date()} ] - Below are the Incidents in "
+                    "PagerDuty Now:"
+                )
                 print(format_incident_table(updated_incidents))
+            else:
+                print(
+                    f"[ {get_the_date()} ] - No [Triggered] Incidents assigned to "
+                    f"{user_name} found on PagerDuty Currently!"
+                )
+            
             print("\n\n")
             time.sleep(interval)
 
     except KeyboardInterrupt:
-        pass  # Allow graceful termination with Ctrl+C
+        running[0] = False
 
     finally:
         end_time = time.time()
         total_time = end_time - start_time
-        print(f"\n[ {get_the_date()} ] - The loop was terminated gracefully. Total running time: {total_time:.2f} seconds.\n")
+        print(
+            f"\n[ {get_the_date()} ] - The loop was terminated gracefully. "
+            f"Total running time: {total_time:.2f} seconds.\n"
+        )
 
 
-
-
-
-# # # # # # # # # # # # # # # #  Resolve Functionalities # # # # # # # # # # # # # # # #  
-
-def pd_resolve_all(session):
+def pd_resolve_all(session: pdpyras.APISession) -> None:
+    """Resolve all acknowledged incidents.
+    
+    Args:
+        session: PagerDuty API session
+    """
     incidents = session.list_all(
         'incidents',
         params={'statuses[]': ['acknowledged']}
     )
 
-    for item in incidents:
-        item['status'] = 'resolved'
-
-    # PUT the updated list back up to the API
-    if len(incidents) == 0:
+    if not incidents:
         print(f"[ {get_the_date()} ] - No [Acknowledged] Incidents found on PagerDuty Currently !")
-    else:
-        print(f"[ {get_the_date()} ] - Resolving all [Acknowledged] Incidents on PagerDuty Now ...")
-        updated_incidents = session.rput('incidents', json=incidents)
-        print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now (UPDATED LIST):")
-        print(format_incident_table(updated_incidents))
+        return
+
+    for incident in incidents:
+        incident['status'] = 'resolved'
+
+    print(f"[ {get_the_date()} ] - Resolving all [Acknowledged] Incidents on PagerDuty Now ...")
+    updated_incidents = session.rput('incidents', json=incidents)
+    print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now (UPDATED LIST):")
+    print(format_incident_table(updated_incidents))
 
 
-def pd_resolve_id(session, service_ids):
+def pd_resolve_id(
+    session: pdpyras.APISession,
+    service_ids: List[str]
+) -> None:
+    """Resolve specific incidents by ID.
+    
+    Args:
+        session: PagerDuty API session
+        service_ids: List of PagerDuty service IDs
+    """
     incident_ids_input = input("Please Enter the Incident IDs you want to Resolve (comma-separated): ")
     incident_ids = incident_ids_input.split(',')
     
-    response = session.list_all("incidents",
-                                params={'service_ids[]': service_ids,
-                                        'statuses[]': ['triggered','acknowledged']})
+    response = session.list_all(
+        "incidents",
+        params={
+            'service_ids[]': service_ids,
+            'statuses[]': ['triggered', 'acknowledged']
+        }
+    )
 
     if not response:
         print(f"[ {get_the_date()} ] - No Incidents found on PagerDuty currently!")
@@ -270,29 +417,53 @@ def pd_resolve_id(session, service_ids):
     pd_list_all(service_ids, session)
 
 
-def pd_resolve_user(user_id, session, user_name):
+def pd_resolve_user(
+    user_id: str,
+    session: pdpyras.APISession,
+    user_name: str
+) -> None:
+    """Resolve all acknowledged incidents assigned to a specific user.
+    
+    Args:
+        user_id: PagerDuty user ID
+        session: PagerDuty API session
+        user_name: User's display name
+    """
     incidents = session.list_all(
         'incidents',
-        params={'user_ids[]': [user_id], 'statuses[]': ['acknowledged']}
+        params={
+            'user_ids[]': [user_id],
+            'statuses[]': ['acknowledged']
+        }
     )
 
-    for item in incidents:
-        item['status'] = 'resolved'
-
-    # PUT the updated list back up to the API
-    if len(incidents) == 0:
+    if not incidents:
         print(f"[ {get_the_date()} ] - No Acknowledged Incidents assigned to {user_name} found on PagerDuty Currently !")
-    else:
-        print(f"[ {get_the_date()} ] - Resolving all Acknowledged Incidents assigned to {user_name} now ...")
-        updated_incidents = session.rput('incidents', json=incidents)
-        print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now (UPDATED LIST):")
-        print(format_incident_table(updated_incidents))
+        return
+
+    for incident in incidents:
+        incident['status'] = 'resolved'
+
+    print(f"[ {get_the_date()} ] - Resolving all Acknowledged Incidents assigned to {user_name} now ...")
+    updated_incidents = session.rput('incidents', json=incidents)
+    print(f"[ {get_the_date()} ] - Below are the Incidents in PagerDuty Now (UPDATED LIST):")
+    print(format_incident_table(updated_incidents))
 
 
-def pd_resolve_like(session, service_ids):
-    response = session.list_all("incidents",
-                                params={'service_ids[]': service_ids,
-                                        'statuses[]': ['triggered', 'acknowledged']})
+def pd_resolve_like(session: pdpyras.APISession, service_ids: List[str]) -> None:
+    """Resolve all incidents that match a specific keyword in the summary.
+    
+    Args:
+        session: PagerDuty API session
+        service_ids: List of PagerDuty service IDs
+    """
+    response = session.list_all(
+        "incidents",
+        params={
+            'service_ids[]': service_ids,
+            'statuses[]': ['triggered', 'acknowledged']
+        }
+    )
 
     if not response:
         print(f"[ {get_the_date()} ] - No Incidents found on PagerDuty currently!")
@@ -326,172 +497,154 @@ def pd_resolve_like(session, service_ids):
 
 
 # Function to get service IDs and names
-def get_service_ids(session):
-    service_info = []
-
-    # Iterate through each service
-    for service in session.iter_all('services'):
-        service_id = service['id']
-        service_name = service['name']
-        service_info.append((service_id, service_name))
-
-    return service_info
-
-# Function to display service info in a table
-def tabulate_service_info(service_info):
-    if not service_info:
-        print("No service information available.")
-        return
-
-    # Define the headers for the table
-    headers = ["Service ID", "Service Name"]
-
-    # Use the tabulate function to format and display the table
-    table = tabulate(service_info, headers, tablefmt="pretty", stralign="left")
-
-    print(table)
-
+def get_service_ids(session: pdpyras.APISession) -> List[Tuple[str, str]]:
+    """Get all service IDs and names.
+    
+    Args:
+        session: PagerDuty API session
+        
+    Returns:
+        List of tuples containing service ID and name
+    """
+    return [
+        (service['id'], service['name'])
+        for service in session.iter_all('services')
+    ]
 
 
 # Function to get schedules
-def get_schedule_ids(session):
-    schedule_info = []
+def get_schedule_ids(session: pdpyras.APISession) -> List[Tuple[str, str]]:
+    """Get all schedule IDs and names.
+    
+    Args:
+        session: PagerDuty API session
+        
+    Returns:
+        List of tuples containing schedule ID and name
+    """
+    return [
+        (schedule['id'], schedule['name'])
+        for schedule in session.iter_all('schedules')
+    ]
 
-    # Iterate through each schedule
-    for schedule in session.iter_all('schedules'):
-        schedule_id = schedule['id']
-        schedule_name = schedule['name']
-        schedule_info.append((schedule_id, schedule_name))
 
-    return schedule_info
-
-# Function to display schedule info in a table
-def tabulate_schedule_info(schedule_info):
-    if not schedule_info:
-        print("No schedule information available.")
+def tabulate_info(info_list: List[Tuple[str, str]], headers: List[str]) -> None:
+    """Display information in a tabulated format.
+    
+    Args:
+        info_list: List of tuples containing ID and name
+        headers: Column headers for the table
+    """
+    if not info_list:
+        print("No information available.")
         return
 
-    # Define the headers for the table
-    headers = ["Schedule ID", "Schedule Name"]
-
-    # Use the tabulate function to format and display the table
-    table = tabulate(schedule_info, headers, tablefmt="pretty",stralign="left")
-
-    print(table)
+    print(tabulate(info_list, headers, tablefmt="pretty", stralign="left"))
 
 
-
-
-
-
-
-
-
-def check_vim_or_vi_installed():
-    try:
-        # Check if 'vim' is installed
-        result_vim = subprocess.run(['vim', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-        # Check the return code. If Vim is installed, it should return 0.
-        if result_vim.returncode == 0:
-            return "Vim is installed on this system."
-
-    except FileNotFoundError:
-        pass  # 'vim' executable is not found, continue to check for 'vi'
-
-    try:
-        # Check if 'vi' is installed
-        result_vi = subprocess.run(['vi', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-        # Check the return code. If Vi is installed, it should return 0.
-        if result_vi.returncode == 0:
-            return "Vi is installed on this system."
-
-    except FileNotFoundError:
-        return "Neither Vim nor Vi is installed on this system."
+def check_vim_or_vi_installed() -> bool:
+    """Check if Vim or Vi is installed on the system.
     
+    Returns:
+        bool: True if either Vim or Vi is installed
+    """
+    editors = ['vim', 'vi']
+    for editor in editors:
+        try:
+            result = subprocess.run(
+                [editor, '--version'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            if result.returncode == 0:
+                return True
+        except FileNotFoundError:
+            continue
+    return False
 
-def open_vim_for_incident_note(incident_id):
-    # Create a temporary directory to store the notes file
+
+def open_vim_for_incident_note(incident_id: str) -> str:
+    """Open Vim editor for incident note creation.
+    
+    Args:
+        incident_id: PagerDuty incident ID
+        
+    Returns:
+        str: Path to the temporary note file
+    """
     temp_dir = tempfile.mkdtemp()
+    return os.path.join(temp_dir, f"{incident_id}_Note.txt")
 
-    # Define the file name based on the incident ID
-    note_file = os.path.join(temp_dir, f"{incident_id}_Note.txt")
 
-    # Open Vim editor
-    subprocess.run(["vim", note_file])
-
-    return note_file
-
-def read_note_from_file(note_path):
-    note_file_path = note_path
-    note = ""
+def read_note_from_file(note_path: str) -> str:
+    """Read note content from a file.
     
-    if os.path.exists(note_file_path):
-        with open(note_file_path, "r") as note_file:
-            note = note_file.read().strip()
+    Args:
+        note_path: Path to the note file
+        
+    Returns:
+        str: Content of the note file
+    """
+    if not os.path.exists(note_path):
+        return ""
+        
+    with open(note_path, "r", encoding="utf-8") as note_file:
+        return note_file.read().strip()
+
+
+def check_pagerduty_status() -> bool:
+    """Check if PagerDuty API is accessible.
     
-    return note
-
-
-
-def add_note_to_incident(session, incident_id, note):
-    endpoint = f'/incidents/{incident_id}/notes'
-
-    # Generate the timestamp with the specified format and timezone
-    current_time_utc = datetime.datetime.now(pytz.timezone('UTC'))
-    formatted_time = current_time_utc.strftime('[ %d-%b-%Y - %H:%M IST ]')
-
-    # Add the timestamp to the note content
-    note_with_timestamp = f"{formatted_time} - Note Added\n\n{note}"
-
-    payload = {
-        "note": {
-            "content": note_with_timestamp,
-        }
-    }
-
-    try:
-        response = session.post(endpoint, json=payload)
-        response.raise_for_status()
-
-        print(f"Note added to incident ID {incident_id}")
-    except pdpyras.PDClientError as e:
-        print(f"Failed to add note to incident ID {incident_id}: {e}")
-
-
-
-def check_pagerduty_status():
-
+    Returns:
+        bool: True if PagerDuty API is accessible
+    """
     url = "https://api.pagerduty.com/"
-
-    try:
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            return True
-        else:
-            return False
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return False
-
-def check_pagerduty_company_url(url):
-    try:
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            return True
-        else:
-            return False
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return False
     
+    try:
+        response = requests.get(url)
+        return response.status_code == 200
+    except requests.exceptions.RequestException:
+        return False
 
 
-# Function to create an incident for a specific service using pdpyras
-def create_incident_for_service(api_token,user_email,service_id,title,description,company_domain):
+def check_pagerduty_company_url(url: str) -> bool:
+    """Check if company's PagerDuty URL is accessible.
+    
+    Args:
+        url: Company's PagerDuty URL
+        
+    Returns:
+        bool: True if URL is accessible
+    """
+    try:
+        response = requests.get(url)
+        return response.status_code == 200
+    except requests.exceptions.RequestException:
+        return False
+
+
+def create_incident_for_service(
+    api_token: str,
+    user_email: str,
+    service_id: str,
+    title: str,
+    description: str,
+    company_domain: str
+) -> Optional[str]:
+    """Create a new PagerDuty incident.
+    
+    Args:
+        api_token: PagerDuty API token
+        user_email: User's email address
+        service_id: PagerDuty service ID
+        title: Incident title
+        description: Incident description
+        company_domain: Company's PagerDuty domain
+        
+    Returns:
+        Optional[str]: Incident ID if created successfully
+    """
     url = 'https://api.pagerduty.com/incidents'
     headers = {
         'Content-Type': 'application/json',
@@ -503,7 +656,7 @@ def create_incident_for_service(api_token,user_email,service_id,title,descriptio
     payload = {
         "incident": {
             "type": "incident",
-            "title": title, 
+            "title": title,
             "service": {
                 "id": service_id,
                 "type": "service_reference"
@@ -516,16 +669,19 @@ def create_incident_for_service(api_token,user_email,service_id,title,descriptio
         }
     }
 
-    r = requests.post(url, headers=headers, data=json.dumps(payload))
-
-    print(f'Status Code: {r.status_code}')
-    response_data = r.json()
-
-    if 'incident' in response_data:
-        incident_id = response_data['incident']['id']
-        incident_url = f'{company_domain}/incidents/{incident_id}'
-        print(f'Incident Created successfully with ID: {incident_id}')
-        print(f'Please visit the URL for more details: {incident_url}')
-    else:
-        print('Failed to create incident.')
-        return None
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'incident' in data:
+            incident_id = data['incident']['id']
+            incident_url = f'{company_domain}/incidents/{incident_id}'
+            print(f'Incident Created successfully with ID: {incident_id}')
+            print(f'Please visit the URL for more details: {incident_url}')
+            return incident_id
+            
+    except requests.exceptions.RequestException as exc:
+        print(f'Failed to create incident: {exc}')
+        
+    return None
